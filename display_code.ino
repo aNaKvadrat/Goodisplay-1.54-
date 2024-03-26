@@ -37,7 +37,7 @@ void EPD_Init() {
   digitalWrite(RES_Pin, HIGH); // Release reset
   delay(100);
 
-  // Send additional initialization commands here if needed
+  
 
   // End SPI communication
   SPI.endTransaction();
@@ -55,9 +55,7 @@ void setup() {
 }
 
 void loop() {
-  // Your main code logic here
-
-  // Example bitmap data for the letters "Hello" (5x8 font)
+  
   const unsigned char myBitmap[1][5000] PROGMEM = {
      0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 
@@ -376,6 +374,6 @@ void loop() {
 
   EPD_SendBitmapData((const unsigned char *)myBitmap, sizeof(myBitmap)); // Send bitmap data to the display
 
-  // You can add delay here if needed
+  
   delay(5000); // Delay for 5 seconds before refreshing the display
 }
