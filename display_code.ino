@@ -1,3 +1,4 @@
+// code for one display, tested //
 #include <SPI.h>
 #include "Ap_29demo_1.h"
 
