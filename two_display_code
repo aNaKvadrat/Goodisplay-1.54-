@@ -1,0 +1,111 @@
+
+
+#include <SPI.h>
+#include "Ap_29demo_1.h"
+
+// IO settings
+const int BUSY_Pin = 7; 
+const int RES_Pin = 8; 
+const int DC_Pin = 9; 
+const int CS_Pin = 10; 
+
+// Define the number of displays and the segment width
+const int DISPLAY_COUNT = 2; // Change this according to the number of displays
+const int SEGMENT_WIDTH = 2500; // Adjust this according to the width of each display
+
+// Command definitions
+#define EPD_W21_CS_0 digitalWrite(CS_Pin, LOW)
+#define EPD_W21_CS_1 digitalWrite(CS_Pin, HIGH)
+#define EPD_W21_DC_0 digitalWrite(DC_Pin, LOW)
+#define EPD_W21_DC_1 digitalWrite(DC_Pin, HIGH)
+#define EPD_W21_RST_0 digitalWrite(RES_Pin, LOW)
+#define EPD_W21_RST_1 digitalWrite(RES_Pin, HIGH)
+#define isEPD_W21_BUSY digitalRead(BUSY_Pin)
+
+// Function prototypes
+void SPI_Write(unsigned char value);
+void Epaper_Write_Command(unsigned char command);
+void Epaper_Write_Data(unsigned char command);
+void EPD_HW_Init(void);
+void EPD_WhiteScreen(const unsigned char *data, unsigned char color);
+void EPD_DeepSleep(void);
+
+// Function called; initializes the pins and begins SPI communication
+void setup() {
+  pinMode(BUSY_Pin, INPUT); 
+  pinMode(RES_Pin, OUTPUT);  
+  pinMode(DC_Pin, OUTPUT);    
+  pinMode(CS_Pin, OUTPUT);    
+  
+  SPI.beginTransaction(SPISettings(10000000, MSBFIRST, SPI_MODE0)); 
+  SPI.begin();  
+}
+
+void loop() {
+  // Initialize display
+  EPD_HW_Init();
+
+  // Show the image segments on each display
+  for (int i = 0; i < DISPLAY_COUNT; i++) {
+    // Calculate the segment boundaries for this display
+    int startIdx = i * SEGMENT_WIDTH;
+    int endIdx = min((i + 1) * SEGMENT_WIDTH, 5000); // Assuming total image size is 5000 bytes
+    
+    // Show the segment of the image on this display
+    EPD_WhiteScreen(gImage_6 + startIdx, 0xFF, startIdx, endIdx);
+  }
+  
+  // Enter deep sleep
+  EPD_DeepSleep();
+}
+
+// SPI communication
+void SPI_Write(unsigned char value) {                                                           
+  SPI.transfer(value);
+}
+
+void Epaper_Write_Command(unsigned char command) {
+  EPD_W21_CS_0;                   
+  EPD_W21_DC_0;   // command write
+  SPI_Write(command);
+  EPD_W21_CS_1;
+}
+
+void Epaper_Write_Data(unsigned char command) {
+  EPD_W21_CS_0;                   
+  EPD_W21_DC_1;   // data write
+  SPI_Write(command);
+  EPD_W21_CS_1;
+}
+
+// EPD settings Functions
+void EPD_HW_Init(void) {
+  EPD_W21_RST_0;  // Module reset      
+  delay(20); // At least 10ms delay 
+  EPD_W21_RST_1; 
+  delay(20); // At least 10ms delay 
+
+  // Additional initialization commands can be added here if necessary
+
+  Epaper_Write_Command(0x12);  // SWRESET
+  while (isEPD_W21_BUSY == HIGH); // Wait until module is ready
+
+  // Add further initialization commands here if needed
+}
+
+void EPD_WhiteScreen(const unsigned char *data, unsigned char color, int startIdx, int endIdx) {
+  Epaper_Write_Command(0x24);   // Write RAM for black(0)/white (1)
+  for (unsigned int i = startIdx; i < endIdx; i++) {               
+    Epaper_Write_Data(pgm_read_byte(&data[i]) & color); // Apply color mask
+  }
+  Epaper_Write_Command(0x22); // Display Update Control
+  Epaper_Write_Data(0xF7);   
+  Epaper_Write_Command(0x20); // Activate Display Update Sequence
+  while (isEPD_W21_BUSY == HIGH); // Wait until update is complete
+}
+
+void EPD_DeepSleep(void) {  
+  Epaper_Write_Command(0x10); // Enter deep sleep
+  Epaper_Write_Data(0x01); 
+  delay(100);
+}
