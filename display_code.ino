@@ -74,13 +74,10 @@ void Epaper_Write_Data(unsigned char command) {
 
 // EPD settings Functions
 void EPD_HW_Init(void) {
-  
-  // Additional initialization commands can be added here if necessary
 
   Epaper_Write_Command(0x12);  // SWRESET
   while (isEPD_W21_BUSY == HIGH); // Wait until module is ready
 
-  // Add further initialization commands here if needed
 }
 
 void EPD_WhiteScreen(const unsigned char *data, unsigned char color) {
